@@ -1,0 +1,98 @@
+/********************************************vscode快捷键******************************************
+ ***************************************************************************************************/
+
+1、Ctrl + \  分屏
+2、Ctrl + w ：取消分屏
+3、Ctrl +Alt+"方向键"  多行选中
+4、Ctrl + D ： 配合3使用  可以多行字符匹配选中
+5、Alt + Shift + “方向键”  重复复制-粘贴 上一行或下一行
+6、Ctrl + B: 可取消或显示侧栏
+
+
+/==================================================================================================/
+
+
+
+/******************************************vscode settings.json*************************************
+ ***************************************************************************************************/
+
+
+{
+    "workbench.iconTheme": "vscode-icons",
+    "workbench.colorTheme": "Community Material Theme Palenight High Contrast",
+    "editor.fontLigatures": true,
+    "editor.fontSize": 18,
+    "editor.fontFamily": "'Fira Code',Consolas",
+    "editor.tabSize": 6,
+    "workbench.colorCustomizations": {
+        "editor.selectionBackground": "#aa0000",
+        "editor.foreground": "#fa00ed"
+    },
+    "editor.tokenColorCustomizations": {
+        "comments": "#a2d5f7", // 注释
+        "keywords": "#79f579", // 关键字
+        "variables": "#f00", // 变量名
+        "strings": "#e2d75dbd", // 字符串
+        "functions": "#03f52bc9", // 函数名
+//        "numbers": "#AE81FF" // 数字
+      },
+
+
+    "cmake.configureOnOpen": true,
+    //todo-tree settings
+    "todo-tree.regex.regex": "((//|#|<!--|;|/\\*|^)\\s*($TAGS):|^\\s*- \\[ \\])",
+    "todo-tree.general.tags": [
+        "TODO_",
+        "FIXME_",
+        "tag_",
+        "done_",
+        "note_"
+    ],
+    "todo-tree.regex.regexCaseSensitive": false,
+//    "todo-tree.tree.showInExplorer": true,
+
+    "todo-tree.highlights.defaultHighlight": {
+        "foreground": "white",
+        "background": "yellow",
+        "icon": "check",
+        "rulerColour": "yellow",
+        "type": "tag",
+        "iconColour": "yellow"
+    },
+    "todo-tree.highlights.customHighlight": {
+        "todo": {
+            "background": "yellow",
+            "rulerColour": "yellow",
+            "iconColour": "yellow"
+        },
+        "FIXME": {
+            "background": "red",
+            "icon": "beaker",
+            "rulerColour": "red",
+            "iconColour": "red",
+        },
+        "tag": {
+            "background": "blue",
+            "icon": "tag",
+            "rulerColour": "blue",
+            "iconColour": "blue",
+            "rulerLane": "full"
+        },
+        "done": {
+            "background": "green",
+            "icon": "issue-closed",
+            "rulerColour": "green",
+            "iconColour": "green",
+        },
+        "note": {
+            "background": "#f90",
+            "icon": "note",
+            "rulerColour": "#f90",
+            "iconColour ": "#f90"
+        }
+    },
+    "sync.gist": "38c2a12ce593ad7cd55c8ab771445651"
+}
+
+/==================================================================================================/
+

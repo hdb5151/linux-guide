@@ -35,7 +35,41 @@
 >>* git reset --hard "commit id"
 >>>* **commit id** 可以通过 **git log** 查询， 回退到以前的版本后，后面的版本会被删除。
 >* 创建分支，并行开发
->>* git branch "verName"
+>>* git branch ’verName‘
 >* 多分支之间切换
->>* git checkout "verName"
-0.4
+>>* git checkout ‘verName’
+>* 分支合并
+>>* git merge ‘verName’
+>* 删除分支
+>>* git branch -d ‘verName’
+
+## 创建完成项目后，上传到github步骤
+>* 项目添加
+>>* git add .
+>* 项目提交
+>>* git commit -m "解释说明"
+>* 创建main 分支
+>>* git btanch -M main
+>* 设置项目上传到github 的仓库地址，例如https://github.91chi.fun/https://github.com/hdb5151/linx-guiding.git
+>>* git remote add origin '仓库地址'
+>* 上传
+>>* git push -u origin '分支名(main)'
+
+## 官方教程
+### …or create a new repository on the command line
+echo "# linux-guide" >> README.md
+git init
+git add README.md
+git commit -m "first commit"
+git branch -M main
+git remote add origin https://github.com/hdb5151/linux-guide.git
+git push -u origin main
+
+### …or push an existing repository from the command line
+git remote add origin https://github.com/hdb5151/linux-guide.git
+git branch -M main
+git push -u origin main
+
+# 一些常用命令
+>* 删除远程主机
+>>* git remote rm origin

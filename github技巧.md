@@ -31,3 +31,11 @@
 >>>* 使用-m 参数后，就不会弹出vim编辑框，可以直接添加修改说明
 >* 查看修改的信息
 >>* git log
+>* 回退操作
+>>* git reset --hard "commit id"
+>>>* **commit id** 可以通过 **git log** 查询， 回退到以前的版本后，后面的版本会被删除。
+>* 创建分支，并行开发
+>>* git branch "verName"
+>* 多分支之间切换
+>>* git checkout "verName"
+0.4

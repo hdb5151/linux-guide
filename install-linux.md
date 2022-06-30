@@ -53,8 +53,12 @@ deb-src http://mirrors.tuna.tsinghua.edu.cn/ubuntu-ports/ bionic-backports main 
 		将文件中的 GRUB_CMDLINE_LINUX_DEFAUL T="quiet splash"改为GRUB_CMDLINE_LINUX_DEFAULT="quiet splash nomodeset"
 		
 >>>* b.2、 sudo update-grub
-# 蓝牙鼠标延时
 
+# 无法创建或修改文件 提示 **xxxxxxx : Read-only file system**
+>* 重新挂载根目录 /
+>>* 
+
+# 蓝牙鼠标延时
 >* 获取蓝牙鼠标的蓝牙地址（我的MAC地址：E4:D7:38:B0:03:54）
 >* sudo su	需要root权限
 >* cd /var/lib/bluetooth/xxxx/E4:D7:38:B0:03:54	进入蓝牙鼠标文件
@@ -69,6 +73,12 @@ Latency=59
 Timeout=300 
 ```
 >* 将电脑重启后，蓝牙鼠标恢复正常
+
+# 下载 vscode速度太慢的问题
+>* 例如下载vscode 1.6.8版本,官网的下载链接是 "https://az764295.vo.msecnd.net/stable/30d9c6cd9483b2cc586687151bcbcd635f373630/code_1.68.1-1655263094_amd64.deb"  速度很慢,
+>* 解决办法:
+>>* 将官网下载链接的 "az764295.vo.msecnd.net" 部分替换成 "vscode.cdn.azure.cn", 替换后的下载链接 "https://vscode.cdn.azure.cn/stable/30d9c6cd9483b2cc586687151bcbcd635f373630/code_1.68.1-1655263094_amd64.deb"
+
 # 更改权限，所有者，密码 添加用户  改变所属组 
 ## 更改权限
 >* 给予文件可执行权限
@@ -107,7 +117,7 @@ passwd：已成功更新密码
 >* 存在问题...
 >>* username in not in sudoers files
 >* 解决
->>*  切换到可以sudo 的用户
+>>*  切换到可以sudo 的用户b
 >>* 编辑配置文件
 >>>* vim /etc/sudoers
 >>* 增加配置, 在打开的配置文件中，找到root ALL=(ALL) ALL, 在下面添加一行,其中xxx是你要加入的用户名称
@@ -127,6 +137,7 @@ passwd：已成功更新密码
 >>* vim /etc/sudoers
 >>* 在 `root	ALL=(ALL:ALL) ALL` 下面增加：
 >>>* newname	ALL=(ALL:ALL) ALL
+
 >* 修改 /etc/shadow,将最后一行 oldname 修改为 newname  例如将`novotech:$6$PVAJZ3FI$dX4p3RxAnwgF2lxgL.P7xgH1YY6TH4McMtpkoep/zkaevFrs1yrk/I3I/piCY1zUzUq1ZOo/TzJW2JUxyTtRi.:18838:0:99999:7:::`改为`tdgk:$6$PVAJZ3FI$dX4p3RxAnwgF2lxgL.P7xgH1YY6TH4McMtpkoep/zkaevFrs1yrk/I3I/piCY1zUzUq1ZOo/TzJW2JUxyTtRi.:18838:0:99999:7:::`
 >> :%s/novotech/tdgk/g
 >
@@ -140,8 +151,9 @@ passwd：已成功更新密码
 >:
 >* 修改所属用户组
 >>* sudo vim /etc/group
->>* :%s/oldname/newname/g
+>>* :%s/novotech/tdgk/g
 >* 重启设备后 生效
+
 ## 更改主机名
 >* 临时更改
 >>* sudo hostname <new-hostname>
@@ -149,6 +161,7 @@ passwd：已成功更新密码
 >>* ①hostnamectl set-hostname <new-hostname>   如果没有用使用下面的办法②
 >>* ②-1 修改 /etc/hostname文件  将文件中的名称 改成需要的主机名
 >>* ②-2 修改 /etc/hosts 文件,将文件中的名称改成需要的主机名
+>* 重启后生效
 
 # 添加桌面---安装字体
 
@@ -186,9 +199,12 @@ Name[en_US]=visul_debug
 >
 >* vscode-sync  同步的token号 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
 
+# 自定义命令
+>* 打开 **~/.bashrc** 文件, 找到以 **alias** 开头的代码段,添加命令, 例如
+>>* alias hh='code /home/hdb/HDB_tempt/0—文档/install-linux.md'
+>>* source ~/.bashrc
 
 # ssh使用   
-
 >* 连接服务器  
 >>* ssh username@192.168.6.61	(username=hdb   192.168.6.61  服务器地址) 
 >
@@ -201,6 +217,7 @@ Name[en_US]=visul_debug
 >* 获取root权限  `sudo su`
 >* 使用root权限生成主机公约和密匙
 >>* ssh-keygen  -t rsa
+>>>* Enter file in which to save the key (/root/.ssh/id_rsa): /home/hdb/.ssh/id_rsa
 >>>* 生成路径选择 `~/.ssh/id_rsa`
 >>>>* 会在 `~/.ssh/id_rsa` 生成文件 `id_rsa.pub`
 >* 在从机（需要免密登录的设备）创建 `~/.ssh/authorized_keys`
@@ -208,6 +225,46 @@ Name[en_US]=visul_debug
 >* 将主机生成的文件 `id_rsa.pub` 拷贝到从机 `~/.ssh/` 中。
 >* 在从机中将 `~/.ssh/id_rsa.pub` 写入到 `~/.ssh/authorized_keys` 中
 >>* cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys
+
+#桌面远程连接
+>* 使用方案 'vnc4server + xfce4 + xrdp'
+
+>* 安装 ***vnc4server + xfce4***
+>>* sudo apt-get install vnc4server xfce4
+>* 启动vnc server命令：(下文中的:1 表示1号桌面, 因为共有4个桌面可以选择,打开1号桌面)
+>>* vncserver -geometry 1280x800 -alwaysshared :1
+>>>* 停止服务的命令:
+>>>>*  vncserver -kill :1
+>* 修改VNC 启动脚本
+>>* cd ~/.vnc
+>>* vim xstartup
+```
+#!/bin/sh
+ 
+# Uncomment the following two lines for normal desktop:
+#unset SESSION_MANAGER
+#exec /etc/X11/xinit/xinitrc
+ 
+#[ -x /etc/vnc/xstartup ] && exec /etc/vnc/xstartup
+#[ -r $HOME/.Xresources ] && xrdb $HOME/.Xresources
+#xsetroot -solid grey
+#vncconfig -iconic &
+#x-terminal-emulator -geometry 80x24+10+10 -ls -title "$VNCDESKTOP Desktop" &
+#x-window-manager &
+unset SESSION_MANAGER
+unset DBUS_SESSION_BUS_ADDRESS
+[ -x /etc/vnc/xstartup ] && exec /etc/vnc/xstartup
+[ -r $HOME/.Xresources ] && xrdb $HOME/.Xresources
+vncconfig -iconic &
+xfce4-session &
+```
+>* 关闭vnc 服务器:
+>>* vncserver -kill :1
+>* 以后每次需要远程桌面时,只需要执行如下命令即可:
+>>* vncserver -geometry 1280x800 -alwaysshared :1
+
+>* 客户端连接工具: ***vnc viewer***
+
 
 
 # ultraEdit 破解
@@ -327,9 +384,7 @@ network:
 >>* 使用命令 **route -n** 查看NX板的路由表时,发现NX板默认使用的网卡是 eth1,即默认使用GIGE1网口,因此无法正常.
 >* 解决:
 >>* 修改 ***network_manager.yaml*** 配置文件, 将网卡 **eth0**以外的网卡的网关(gateway)注释掉即可.  如果想设置网关,可以使用命令 ***sudo route add -net 192.168.201.1 netmask 255.255.255.0 dev eth1*** （让对192.168.0.0的访问走eth1网卡，netmask 后面是子网掩码）.这个命令关机后失效, 如果想永久有效,将这条命令加入开机启动命令中.
-
-
-
+ 
 # 测试网速 iperf3
 >
 >* 安装iperf3: 需要到官网下载安装包   [iperf网址](https://iperf.fr/iperf-download.php)
@@ -359,6 +414,9 @@ sed -i s/"gk\/"/"zf"/g `grep -rl "gk/" ./ `
 	其中，`grep 中的 ` 不是 单引号，时"ESC"下的那个键。
 `
 
+# jetson-NX 刷机
+>* 插上USB烧写线,接着recovery跳针开机
+>* 进入目录,执行 nx-recovery.sh 脚本
 
 # jetson 将系统由eMMC转移到SSD中
 ## jetson如果时初次转移到SSD
@@ -379,7 +437,7 @@ sed -i s/"gk\/"/"zf"/g `grep -rl "gk/" ./ `
 >
 >* 进行分区
 >>* sudo fdisk /dev/nvme0n1
-```3
+```
 Command (m for help): n
 Partition number (2-128, default 2): (单击ENTER,使用默认值)
 First sector (34-250069646, default 2048): (单击ENTER,使用默认值)
@@ -405,14 +463,22 @@ Command (m for help): q
 >>>* reboot
 
 ## 将系统从SSD转移到EMMC
->* 删除文件 ***/etc/setssdroot.conf***
->>* sudo rm /etc/setssdroot.conf
+>* 挂载emmc文件系统
+>>* sudo mount /dev/mmcblk0p1 /mnt
+>* 删除文件 ***/mnt/etc/setssdroot.conf***
+>>* sudo rm /mnt/etc/setssdroot.conf
 >>>*  在 ***setup-service.sh***中有说明
 ## 再次将系统由EMMC转移到SSD
 >* 创建空文件 ***/etc/setssdroot.conf***
 >>* sudo mkdir /etc/setssdroot.conf
 >>>*  在 ***setup-service.sh***中有说明
 
+### 在系统运行期间  可以出现 系统自动从 SSD转移到EMMC  (原因未知)
+>* 解决:
+>>* 首先使用命令 **lsblk** 查看 板子能否识别到 SSD, 如果可以显示 **nvme0n1p1**,说明固态硬盘是好的
+>>* 需要重新挂载磁盘 **nvme0n1p1**  命令是: sudo mount /dev/nvme0n1p1 /mnt, 然后执行  sudo ./setup-service.sh, 重启后,系统就会从SSD启动.
+>>>* 在上述执行sudo mount xxxxxx 的时候可能会报错误: ***mount: /mnt: cannot mount; probably corrupted filesystem on /dev/nvme0n1p1***
+>>>>* 解决: 执行 ***sudo fsck.ext4 -v /dev/nvme0n1p1***  然后 一路输入 **y** 即可修复磁盘"nvme0n1p1". 然后重新执行  sudo mount /dev/nvme0n1p1 /mnt   和  sudo ./setup-service.sh  即可.
 
 # 安装ROS系统  
 > [参考网址]（https://blog.csdn.net/KIK9973/article/details/118755045）
@@ -766,8 +832,54 @@ Docker运行镜像时问题和解决：
 >>* sudo rm -r /usr/src/jetson_multimedia_api
 >>* sudo rm -r /usr/src/nvidia
 >>* sudo rm -r /usr/src/tensorrt
->>* 
+>>* sudo rm -r /usr/local/cuda/targets/aarch64-linux/lib/*.a* \
+	/usr/local/cuda/doc \
+	/usr/local/cuda/samples
+>>* sudo rm -r /usr/lib/aarch64-linux-gnu/libcudnn*.a
+>* 删除cuda 静态库(*.a),文档(doc),例程(samples)  约1.7G
+>>* sudo rm -r /usr/local/cuda/targets/aarch64-linux/lib/*.a* \
+	/usr/local/cuda/doc \
+	/usr/local/cuda/samples
+>* 删除cuDNN 静态库  约1.5G 
+>>* sudo rm -r /usr/lib/aarch64-linux-gnu/libcudnn*.a
 
+# 删除cuDNN 静态库  约1.5G 
+sudo rm -r /usr/lib/aarch64-linux-gnu/libcudnn*.a
+
+
+# 在NX 上修改迈德威视 工业相机的IP地址
+>* 编辑 /etc/sysctl.d/10-network-security.conf 将其中的 3 项 *.rp_filter=1  改成 *.rp_filter=0
+>* ***有时候,上述命令存在问题, 经过试验发现,执行上述修改后,有的NX板依旧不能实现跨网段 广播的收,发. GigE口无法识别相机***,原因: 迈德威视相机驱动中 采用 "广播"的方式检测GigE口有没有接相机, 但是NX的配置文件中 过滤了广播消息. 通常修改上述文件,可关闭对广播消息的过滤. 但是,由于未知的原因,有时候 修改 **/etc/sysctl.d/10-network-security.conf** 中的配置后,却不能生效.
+
+>* 上述问题解决:
+>>* 修改 /etc/sysctl.conf文件, 通常这个文件里放着关于 系统和内核的一些设置. 对文件做如下修改:
+将
+```
+#net.ipv4.conf.default.rp_filter=1
+#net.ipv4.conf.all.rp_filter=1
+```
+修改
+```
+net.ipv4.conf.default.rp_filter=0
+net.ipv4.conf.all.rp_filter=0
+
+net.ipv4.conf.eth1.rp_filter = 0
+net.ipv4.conf.eth2.rp_filter = 0
+net.ipv4.conf.eth3.rp_filter = 0
+net.ipv4.conf.eth4.rp_filter = 0
+```
+>>* 使用命令 ***sysctl -p***  使配置生效.
+>* 出现问题: 每次开机还是需要都需要执行 **sysctl -p** 才能生效
+>>* 临时解决方案: 开机自动执行 **sysctl -p** .
+
+>>>* 补充说明: 上述修改可永久生效,但是存在安全问题...  如果只是想临时使用,可使用如下办法:
+>>>* 在***/proc/sys/net/ipv4/conf/*** 目录下放着 所有网卡的配置的文件,我们如果想让某一个(例如eth3)接收到广播消息,可以修改-->
+>>>* **/proc/sys/net/ipv4/conf/all/** , **/proc/sys/net/ipv4/conf/default/** , **/proc/sys/net/ipv4/conf/eth3/** 目录下的文件 ***rp_filter*** 将3个文件中的1 改成0 ,命令如下
+>>>>* sudo su
+>>>>* echo "0" > /proc/sys/net/ipv4/conf/all/rp_filter \
+	echo "0" > /proc/sys/net/ipv4/conf/default/rp_filter \
+	echo "0" > /proc/sys/net/ipv4/conf/eth3/rp_filter
+>>>>* sysctl -p
 
 # 一些常用命令
 >* 查看软连接
@@ -836,3 +948,13 @@ install(TARGETS modbus_server modbus_client DESTINATION ${CMAKE_INSTALL_BINDIR}
 >>* sudo usermod -aG dialout username
 >* 重启电脑
 >>* reboot
+
+# deepstream 或gstreamer 调试
+>* 在代码中添加:
+>>* GST_DEBUG_BIN_TO_DOT_FILE(GST_BIN(pipeline), GST_DEBUG_GRAPH_SHOW_ALL, "gstream-03");
+>* 运行代码:
+>>* GST_DEBUG_DUMP_DOT_DIR=/home/hdb/proj ./execFile/basic_3	
+>>>* 执行结束后,会在目录 **/home/hdb/proj** 中生成 **gstream-03.dot** 文件
+>* 将 .dot文件转换成 .png文件
+>>* dot -Tpng gstream-03.dot  > gst.png		
+

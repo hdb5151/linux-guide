@@ -73,3 +73,6 @@ git push -u origin main
 # 一些常用命令
 >* 删除远程主机
 >>* git remote rm origin
+
+## 克隆 代码加速
+>* git clone https://ghproxy.com/https://github.com/hdb5151/linux-guide.git

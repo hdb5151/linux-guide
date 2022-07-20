@@ -76,3 +76,11 @@ git push -u origin main
 
 ## 克隆 代码加速
 >* git clone https://ghproxy.com/https://github.com/hdb5151/linux-guide.git
+
+
+
+## 如果上传文件出现 'fatal -----' ,	可以通过取消git本身的https代理，使用自己本身的代理来解决
+>* 取消http代理
+>>* git config --global --unset http.proxy
+>* 取消https代理 
+>>* git config --global --unset https.proxy   

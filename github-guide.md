@@ -83,3 +83,9 @@ git push -u origin main
 >>* git pull origin main:main
 >* 如果远程分支是与当前分支合并，则冒号后面的部分可以省略。
 >>* git pull origin main
+
+## 如果上传文件出现 'fatal -----' ,	可以通过取消git本身的https代理，使用自己本身的代理来解决
+>* 取消http代理
+>>* git config --global --unset http.proxy
+>* 取消https代理 
+>>* git config --global --unset https.proxy  

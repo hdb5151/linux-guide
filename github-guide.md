@@ -77,10 +77,9 @@ git push -u origin main
 ## 克隆 代码加速
 >* git clone https://ghproxy.com/https://github.com/hdb5151/linux-guide.git
 
-
-
-## 如果上传文件出现 'fatal -----' ,	可以通过取消git本身的https代理，使用自己本身的代理来解决
->* 取消http代理
->>* git config --global --unset http.proxy
->* 取消https代理 
->>* git config --global --unset https.proxy   
+## 从远程获取代码并合并本地的版本。
+>* git pull <远程主机名> <远程分支名>:<本地分支名>
+>>* git pull origin
+>>* git pull origin main:main
+>* 如果远程分支是与当前分支合并，则冒号后面的部分可以省略。
+>>* git pull origin main

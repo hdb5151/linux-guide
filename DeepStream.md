@@ -66,3 +66,88 @@ struct cudaDeviceProp
       int concurrentKernels; // 一个布尔值，该值表示该设备是否支持在同一上下文中同时执行多个内核
 ｝
 ```
+# 从gstbuffer中获取数据的方法
+
+## gstreamer的插件如何复制数据
+[原文链接](https://quantum6.blog.csdn.net/article/details/84541902)
+工作中，使用了gstreamer和nvidia的DeepStream插件。如何从nvidia插件中获取数据，这个之前吾有博文专门论述。因为这个很少介绍，也不好找。吾当时也是运气好，从别的代码中得到启示，才找到了正确的解决办法。
+
+　　那么，普通的gstreamer插件如何获取数据呢？比如说，从decoder（包括nvidia decoder插件）中，获取原始的h264数据代码是怎样的？这个很简单，这里分享出来，这样可以在本博客中都能找到，更方便。
+
+　　当然，这里的结构体的意思，一看就明白，自行更改即可。
+
+```
+ 
+static int get_probe_h264_data(const GstPadProbeInfo * pProbeInfo, DataBuffer* pBuffer)
+{
+    GstBuffer *gst_buf = (GstBuffer *) pProbeInfo->data;
+    GstMapInfo map_info;
+    int size = 0;
+ 
+    if (gst_buf == NULL || !gst_buffer_map (gst_buf, &map_info, GST_MAP_READ))
+    {
+        g_print ("gst_buffer_map() error!");
+        return -1;
+    }
+ 
+    size        = gst_buffer_get_size( gst_buf );
+    databuffer_check(pBuffer, size);
+    gst_buffer_extract (gst_buf, 0, pBuffer->data, size);
+    pBuffer->size = size;
+ 
+    gst_buffer_unmap (gst_buf, &map_info);
+ 
+    return 0;
+}
+ 
+ 
+/**
+ 获取H264数据，并保存。
+ */
+static GstPadProbeReturn callback_osd_sink_pad_buffer_probe_decoder (GstPad * pad, GstPadProbeInfo * probe_info, gpointer u_data)
+{
+    AiTask *pAiTask = (AiTask *)u_data;
+ 
+    get_probe_h264_data(probe_info, &(pAiTask->h264_buffer));
+ 
+    /*GH_LOG_INFO("size=%d, data=[0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X,]",
+            pAiTask->h264_buffer.size,
+            pAiTask->h264_buffer.data[0],
+            pAiTask->h264_buffer.data[1],
+            pAiTask->h264_buffer.data[2],
+            pAiTask->h264_buffer.data[3],
+            pAiTask->h264_buffer.data[4]
+            );
+    */
+    fwrite(pAiTask->h264_buffer.data, 1, pAiTask->h264_buffer.size, pAiTask->h264_file);
+ 
+    return GST_PAD_PROBE_OK;
+}
+ 
+ 
+int main()
+{
+    video_decoder = gst_element_factory_make("nvdec_h264", element_name);
+ 
+    osd_pad = gst_element_get_static_pad(video_decoder, TEXT_SINK);
+    if (osd_pad)
+    {
+        osd_probe_id = gst_pad_add_probe(osd_pad, GST_PAD_PROBE_TYPE_BUFFER,
+                                callback_osd_sink_pad_buffer_probe_decoder, pTask, NULL);
+    }
+ 
+}
+```
+
+## GstBuffer中data实际的存储地址
+
+前段时间刚开始学Gstreamer，还没学多少就要干活了，最近想用gdb查看GstBuffer的data地址是总很麻烦，要先用gst_buffer_map先获得data，所以就深入的了解了一下GstBuffer中data所存放的地方。下面就和大家分享一下吧！
+
+通常我们需要获取GstBuffer的data数据是通过接口gst_buffer_map得到的，进入gst_buffer_map接口的具体实现，我们可以发现，Gstreamer通过_get_merged_memory函数得到GstBuffer所对应的GstMemory，再深入后，我们可以发现GstBuffer只是暴露给我们用户的信息（通过GstBuffer是找不到我们想要的data的），真正的信息是存储在GstBufferImpl这个结构体中的，此结构体第一个成员即GstBuffer，而后会包含一个GstMemory指针数组（大小为16），我们想要的data就存储在这里面（通常我们只用到了mem[0]）。
+
+_get_merged_memory函数是根据你传的flag（即GST_MAP_READ或GST_MAP_WIRTE）来判断是否要拷贝一份数据。如果你去GstMemory中查找我们想要的data，还是找不到，先别急。Gstreamer会用gst_memory_map来得到对应的data，而进入此函数，我们会发现Gstreamer会用到GstMemory中的allocator成员的mem_map函数来获得data。如果你不深入到Gstreamer框架是比较难找到这个mem_map函数指针的定义的。
+不过，没事，你有我，这部分工作我帮你做吧！在Gstreamer中，我们发现其实GstMemory和GstBuffer一样，只暴露了一部分的信息，具体的信息是存储在GstMemorySystem这个结构体里。而GstMemory所对应的GstAllocator中的函数指针是在gst_allocator_sysmem_init函数中实现的（当然这个函数是可以覆盖的，如gst_xvimage_allocator_init中就覆写了），其中mem_map函数指针指针向的是_sysmem_map函数，在此函数中，我们要以看到，我们最终获取的信息是GstMemorySystem结构体中的data。
+
+通过上面的分析，你应该清楚了Gstreamer是如何获得GstBuffer的data的了吧。所以，在用gdb调试的时候，假如我们想要打印buffer的data地址，可以这样：
+
+ ------p ((GstMemorySystem *)((GstBufferImpl *)buffer)->mem[0])->data-------

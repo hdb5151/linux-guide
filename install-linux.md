@@ -323,13 +323,18 @@ Alias=rc-local.service
 >>>* sudo systemctl status rc-local.service
 >>* 在rc.local中添加需要驱动的sheel文件绝对路径 即可开机运行命令
 
-### 方法三： （用户级的 开机启动， 仅对用户自身有效，不需要 root权限）
+***使用rc.local配置启动文件，所启动的程序均为root启动， 如果需要使用某用户启动的话，可使用如下命令***
+>* su tdgk -c "/home/tdgk/nx_test/init_nx.sh"
+
+
+## 方法三：bash启动 （用户级的 开机启动， 仅对用户自身有效，不需要 root权限）
+>* 改方法只能用户登录 或用户远程登录后才会触发 bash启动
 >* 进入 ~/.profile
 >>* vim ~/.profile
 >* 在最后一行添加绝对路径的脚本文件
 >>* source /../../../../../.sh
 
-### 方法三： （用户级的 登录启动，登录成功后开始运行）
+## 方法三： （用户级的 登录启动，登录成功后开始运行）
 >* 1、创建.sh 文件；2、给予可执行权限；3、将 需要执行的命令写入.sh；4、将.sh文件复制到 `/etc/profile.d` 目录下。
 >* 重启 `reboot`   完成！
 

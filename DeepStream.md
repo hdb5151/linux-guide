@@ -151,3 +151,49 @@ _get_merged_memory函数是根据你传的flag（即GST_MAP_READ或GST_MAP_WIRTE
 通过上面的分析，你应该清楚了Gstreamer是如何获得GstBuffer的data的了吧。所以，在用gdb调试的时候，假如我们想要打印buffer的data地址，可以这样：
 
  ------p ((GstMemorySystem *)((GstBufferImpl *)buffer)->mem[0])->data-------
+
+
+# gst-launch-1.0使用
+1、播放MP4音视频
+MP4文件一般有2个流：音频流和视频流，部分文件会有字幕流。一般我们只处理2个流就够了。一般视频流采用h264编码，音频流采用aac编码。一开始由于不熟悉gst-inspect的用法，导致音视频解码器找不到，浪费了很多时间。
+
+gst-inspect-1.0 | grep h264 找到h264解码器avdec_h264
+
+gst-inspect-1.0 | grep aac 找到aac解码器avdec_aac。也可以用faad解码，faad输出为16位音频，avdec_aac输出为32位音频
+
+gst-launch-1.0中关于demux的用法也摸索了好久，mp4文件要用到qtdemux(quick time demux)，用names属性分离管道，正确用法如下
+
+gst-launch-1.0 filesrc location=gongye.mp4 ! qtdemux name=demuxer demuxer. ! avdec_h264 ! xvimagesink 播放视频
+
+gst-launch-1.0 filesrc location=gongye.mp4 ! qtdemux name=demuxer demuxer. ! avdec_aac ! audioconvert ! audioresample ! alsasink  播放音频(audioresample可选)
+
+gst-launch-1.0 filesrc location=gongye.mp4 ! qtdemux name=demuxer demuxer. ! queue ! avdec_aac ! audioconvert ! alsasink demuxer. ! queue ! avdec_h264 ! xvimagesink  播放音视频
+
+demuxer. 后面可以指定流名称，如 demuxer.video_0，demuxer.audio_0，流名称必须与文件中的流名称对应。
+
+其他的文件格式，如flv，ogg，mpeg等文件都可以采用类似的方式，先用gst-inspect-1.0查找对应的demux和音视频解码器，然后构建管道即刻播放。
+
+对于元件中的request pad，gst-launch-1.0也可以指定request pad的连接，典型如tee，nvstreammux等元件需要request pad，连接方式如下：
+
+gst-launch-1.0 filesrc location=sample_720.h264 ! h264parse ! nvv4l2decoder ! smuxer.sink_0 nvstreammux name=smuxer  width=1920 height=1080 batch-size=1 batched-push-timeout=4000000 ! nvinfer config-file-path=dstest1_pgie_path.txt ! nvvideoconvert ! nvdsosd ! nvvideoconvert ! nvv4l2h264enc ! h264parse ! qtmux ! filesink location=test.mp4
+
+以上命令是对deepstream-test1的命令行模拟，但是缺少了osd探针函数，所以并不完整，但也可以运行，主要用于展示nvstreammux request pad（sink_%u）的用法。其中nvv4l2decoder是nvidia的硬解码元件，nvstreammux是deepstream队列元件，在使用nvinfer进行推理之前必须要使用该队列元件添加nvinfer所需要的数据。nvinfer是推理元件，配置文件为dstest1_pgie_path.txt。有关deepstream的资料，请另行查阅。
+
+2、编码
+gst-launch-1.0 v4l2src device=/dev/video0 ! video/x-raw,format=YUY2,width=640,height=480,framerate=30/1 ! videoconvert ! x264enc ! h264parse ! qtmux ! filesink location=1.mp4 -e
+
+注意，尾部的-e不能省，表示按下ctrl-c键后会向视频流发送EOS标识，视频流才能完整编码。
+
+3、rtp推流
+ 发送端：gst-launch-1.0 v4l2src ! video/x-raw,format=YUY2,width=1280,height=720,framerate=10/1 ! videoconvert ! x264enc ! rtph264pay ! udpsink host=127.0.0.1 port=5600
+
+接收端：gst-launch-1.0 udpsrc port=5600 caps='application/x-rtp,media=(string)video,clock-rate=(int)90000,encoding-name=(string)H264' ! rtph264depay ! avdec_h264 ! videoconvert ! xvimagesink
+
+4、摄像头采集
+（1）实时显示
+
+gst-launch-1.0 v4l2src device = /dev/video0 ! xvimagesink &
+
+（2）如果桌面显示不了的话，可以按照如下存下YUV数据
+
+gst-launch-1.0 v4l2src device = /dev/video0 ! filesink location=video.yuv &

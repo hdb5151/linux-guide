@@ -45,11 +45,17 @@ gst-launch-1.0 videotestsrc ! videoflip method=clockwise ! videoconvert ! ximage
 gst-launch-1.0 videotestsrc ! nvvideoconvert ! 'video/x-raw(memory:NVMM),format=NV12' ! m.sink_0 nvstreammux name=m batch-size=1 width=1024 height=768 ! nveglglessink
 
 
-YUV图像文件
+# YUV图像文件
+```
 gst-launch-1.0 filesrc location=/media/gk/DATA/cari_data/common/video/movie01_i420_640x480_35s_01.yuv ! videoparse width=640 height=480 ! xvimagesink
+
+```
+```
 gst-launch-1.0 filesrc location=/media/gk/DATA/cari_data/common/video/movie01_i420_1280x720_27s_01.yuv ! videoparse width=1280 height=720 ! xvimagesink
 
-视频文件
+```
+
+# 视频文件
 gst-launch-1.0 filesrc location=/home/gk/proj/vision/deep_stream/samples/streams/sample_720p.mp4 ! qtdemux ! h264parse ! nvv4l2decoder ! m.sink_0 nvstreammux name=m batch-size=1 width=1280 height=720 ! nvvideoconvert ! nvdsosd ! nveglglessink
 
 gst-launch-1.0 filesrc location=/home/gk/proj/vision/deep_stream/samples/streams/sample_720p.mp4 ! qtdemux ! h264parse ! nvv4l2decoder ! m.sink_0 nvstreammux name=m batch-size=1 width=1280 height=720 ! nvinfer config-file-path=/home/gk/proj/vision/deep_stream/ds-test/deepstream-test1/dstest1_pgie_config.txt ! nvvideoconvert ! nvdsosd ! nveglglessink
@@ -102,25 +108,89 @@ gst-launch-1.0 v4l2src device=/dev/video0 ! delayqueue ! xvimagesink
 gst-launch-1.0 v4l2src device=/dev/video0 ! 'video/x-raw,width=640,height=480,framerate=15/1' ! delayqueue ! xvimagesink
 gst-launch-1.0 v4l2src device=/dev/video0 ! 'video/x-raw,width=640,height=480' ! delayqueue ! xvimagesink
 
-
-工业相机IDSCamera
+----------------
+# 工业相机IDSCamera
+## 最简 结构
+```
 gst-launch-1.0 \
-	nvidscamera ! 'video/x-raw,format=NV12,width=1024,height=768' ! \
+	nvidscamera dev_idx=0  ! 'video/x-raw,format=NV12,width=1024,height=768' ! \
 	nveglglessink
 
-gst-launch-1.0 \
-	nvidscamera ! 'video/x-raw,format=NV12,width=1024,height=768' ! nvvideoconvert ! \
+```
+
+## 使用 streammux
+```
+GST_DEBUG_DUMP_DOT_DIR=. gst-launch-1.0 \
+	nvidscamera dev_idx=0 ! 'video/x-raw,format=NV12,width=1024,height=768' ! nvvideoconvert ! \
 	'video/x-raw(memory:NVMM),format=NV12' ! m.sink_0 nvstreammux name=m live-source=1 batch-size=1 width=800 height=600 ! \
 	nveglglessink
 
+```
+
+## 使用 streammux + nvinfer + nvdsosd
+```
 gst-launch-1.0 \
-	nvidscamera ! 'video/x-raw,format=NV12,width=1024,height=768' ! nvvideoconvert ! \
+	nvidscamera dev_idx=0  ! 'video/x-raw,format=NV12,width=1024,height=768' ! nvvideoconvert ! \
 	'video/x-raw(memory:NVMM),format=NV12' ! m.sink_0 nvstreammux name=m live-source=1 batch-size=1 width=400 height=300 ! \
 	queue ! nvvideoconvert ! nvinfer config-file-path=/hom_stream/ds-test/deepstream-test1/dstest1_pgie_config.txt ! \
-	queue ! nvvideoconverte/gk/proj/vision/deep ! nvdsosd ! \
+	queue ! nvvideoconvert ! nvdsosd ! \
 	nveglglessink
 
-播放音频
+```
+
+## fcp 实际结构： 基本结构 + nvstreammux
+```
+gst-launch-1.0 \
+    nvidscamera dev_idx=0 ! 'video/x-raw,format=NV12,width=1024,height=768,framerate=16/1' ! videoconvert ! \
+    tee ! nvvideoconvert ! 'video/x-raw(memory:NVMM),format=NV12,width=1024,height=768,framerate=16/1' ! \
+    m.sink_0 nvstreammux name=m width=640 height=480 batch-size=1 live-source=1 batched-push-timeout=4000 gpu-id=0 ! \
+    videoconvert ! nveglglessink
+
+```
+
+## fcp 实际结构： 基本结构 + nvstreammux + nvinfer + nvdsosd
+```
+gst-launch-1.0 \
+    nvidscamera dev_idx=0 ! 'video/x-raw,format=NV12,width=1024,height=768,framerate=16/1' ! videoconvert ! \
+    tee ! nvvideoconvert ! 'video/x-raw(memory:NVMM),format=NV12,width=1024,height=768,framerate=16/1' ! \
+    m.sink_0 nvstreammux name=m width=640 height=480 batch-size=1 live-source=1 batched-push-timeout=40000 ! \
+    queue ! nvvideoconvert ! nvinfer config-file-path=./config_infer_cvy_bfm.cfg ! \
+    queue ! nvvideoconvert ! nvdsosd ! \
+    fakesink
+
+```
+
+## 有问题 不能工作！！！
+```
+gst-launch-1.0 \
+	nvidscamera dev_idx=0 ! 'video/x-raw,format=NV12,width=1024,height=768' ! videoconvert ! \
+    tee ! nvvideoconvert ! 'video/x-raw(memory:NVMM),format=NV12,width=1024,height=768,framerate=16/1' \
+    nvvideoconvert ! 'video/x-raw,format=NV12,width=1024,height=768,framerate=16/1'! \
+    ! m.sink_0 nvstreammux name=m live-source=1 batch-size=1 width=800 height=600 ! \
+	nveglglessink 
+
+```
+
+-------------
+# 深度相机
+
+## 深度图 基本结构 -1
+```
+gst-launch-1.0 \
+    nvdepcamera access-mode=0 stream-type=1 resolution-type=0 ! 'video/x-raw,format=GRAY16_LE,width=1280,height=960,framerate=16/1' ! \
+    nvdeprender ! 'video/x-raw,format=NV12,width=1280,height=960,framerate=16/1' ! queue ! videoconvert ! xvimagesink
+
+```
+
+## 深度图 基本结构 -1
+```
+
+```
+
+
+
+-------------
+# 播放音频
 gst-launch-1.0 filesrc location=/media/gk/DATA/cari_data/common/audio/test01.mp3 ! audioconvert ! audioresample ! osssink
 gst-launch-1.0 filesrc location=/media/gk/DATA/cari_data/common/audio/test01.mp3 ! mad ! audioconvert ! audioresample ! osssink
 gst-launch-1.0 filesrc location=/media/gk/DATA/cari_data/common/audio/test01.wav ! wavparse ! audioresample ! pulsesink

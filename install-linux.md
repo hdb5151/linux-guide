@@ -963,3 +963,36 @@ install(TARGETS modbus_server modbus_client DESTINATION ${CMAKE_INSTALL_BINDIR}
 >* 将 .dot文件转换成 .png文件
 >>* dot -Tpng gstream-03.dot  > gst.png		
 
+# opencv安装
+>* 下载相应版本的 source文件
+>* 执行如下命令：
+>>* mkdir build
+>>* cd build
+>>* sudo cmake -D CMAKE_BUILD_TYPE=Release -D CMAKE_INSTALL_PREFIX=/usr/local ..   
+>>* sudo make -j8
+>>* sudo make install
+>* 配置环境
+>>* 在 **/etc/ld.so.conf** 最后一行添加 **include /usr/loacal/lib**
+>>* 运行sudo ldconfig
+>* 修改 ~/.bashrc  或etc/bash.bashrc 或~/.zshrc, 在上述文件中添加两行,如下：
+```
+PKG_CONFIG_PATH=$PKG_CONFIG_PATH:/usr/local/lib/pkgconfig
+export PKG_CONFIG_PATH
+```
+
+## 查看版本或查看 包含头文件或链接库
+>* 查看版本
+>>* pkg-config --modversion opencv
+>* 查看 包含头文件
+>>* pkg-config --cflags opencv
+>* 查看链接库
+>>* pkg-config --libs opencv
+
+## opencv卸载
+>* cd build
+>* sudo make uninstall
+>* cd ..
+>* rm -r build
+
+## CMakeLists.txt 文件中的 **find_package(OpenCV REQUIRED)** 的路径
+>* 默认搜索在 **/usr/share/OpenCV/OpenCVConfig.cmake**

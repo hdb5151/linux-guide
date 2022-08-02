@@ -996,3 +996,5 @@ export PKG_CONFIG_PATH
 
 ## CMakeLists.txt 文件中的 **find_package(OpenCV REQUIRED)** 的路径
 >* 默认搜索在 **/usr/share/OpenCV/OpenCVConfig.cmake**
+
+/snap/code/102/usr/share/code/code: /snap/core/current/lib/x86_64-linux-gnu/libm.so.6: version `GLIBC_2.27' not found

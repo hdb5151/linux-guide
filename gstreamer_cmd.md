@@ -181,14 +181,99 @@ gst-launch-1.0 \
     nvdeprender ! 'video/x-raw,format=NV12,width=1280,height=960,framerate=16/1' ! queue ! videoconvert ! xvimagesink
 
 ```
+# ---------------------------------------------
 
-## 深度图 基本结构 -1
-```
+gst-launch-1.0 \
+    nvdepcamera access-mode=0 stream-type=1 resolution-type=0 ! 'video/x-raw,format=GRAY16_LE,width=1280,height=960,framerate=16/1' ! \
+    nvdeprender ! 'video/x-raw,format=NV12,width=1280,height=960,framerate=16/1' ! queue ! videoconvert ! xvimagesink
 
-```
+# NX(76) 上可以运行，但是在x86 上运行报错。
+    # depcam --> cam_capsfilter --> nvdeprender --> depth_rdr_capsfilter --> depth_rdr_queue --> nvdepcapfilter --> nvdepvidconv
+gst-launch-1.0 \
+    nvdepcamera access-mode=0 stream-type=1 resolution-type=0 ! 'video/x-raw,format=GRAY16_LE,width=1280,height=960,framerate=16/1' ! \
+    nvdeprender ! 'video/x-raw,format=NV12,width=1280,height=960,framerate=16/1' ! queue ! 'video/x-raw,format=NV12,width=1280,height=960,framerate=16/1' ! \
+    tee ! nvvideoconvert ! 'video/x-raw(memory:NVMM), format=RGBA,width=1280,height=960,framerate=16/1' ! \
+    m.sink_0 nvstreammux name=m width=1920 height=1080 batch-size=1 live-source=1 ! \
+    nvvideoconvert ! fakesink
+    
+    # depcam --> cam_capsfilter 
+    # --> nvdeprender --> depth_rdr_capsfilter --> depth_rdr_queue 
+    # --> nvdepvidconv --> nvdepcapfilter --> nvstreammux  
+    # --> depth_tosink_vidconv --> fakesink
+
+gst-launch-1.0 \
+    nvdepcamera access-mode=0 stream-type=1 resolution-type=0 ! 'video/x-raw,format=GRAY16_LE,width=1280,height=960,framerate=16/1' ! \
+    nvdeprender ! 'video/x-raw,format=NV12,width=1280,height=960,framerate=16/1' ! queue ! \
+    videoconvert ! tee ! nvvideoconvert ! 'video/x-raw(memory:NVMM), format=RGBA,width=1280,height=960,framerate=16/1' ! \
+    m.sink_0 nvstreammux name=m width=1920 height=1080 batch-size=1 live-source=1 ! \
+    nvvideoconvert ! fakesink
+
+
+gst-launch-1.0 \
+    nvdepcamera access-mode=0 stream-type=1 resolution-type=0 ! 'video/x-raw,format=GRAY16_LE,width=1280,height=960,framerate=16/1' ! \
+    nvdeprender ! 'video/x-raw,format=NV12,width=1280,height=960,framerate=16/1' ! queue !  \
+    nvvideoconvert ! 'video/x-raw(memory:NVMM), format=NV12,width=1280,height=960,framerate=16/1' ! \
+    m.sink_0 nvstreammux name=m width=640 height=480 batch-size=1 live-source=1 batched-push-timeout=4000 gpu-id=0 ! nvvideoconvert ! \
+    videoconvert ! xvimagesink
+
+
+gst-launch-1.0 \
+    nvdepcamera access-mode=0 stream-type=1 resolution-type=0 ! 'video/x-raw,format=GRAY16_LE,width=1280,height=960,framerate=16/1' ! \
+    nvdeprender ! 'video/x-raw,format=NV12,width=1280,height=960,framerate=16/1' ! queue ! tee ! \
+    nvvideoconvert ! xvimagesink
+
+GST_DEBUG_DUMP_DOT_DIR=. gst-launch-1.0 \
+    nvdepcamera access-mode=0 stream-type=1 resolution-type=0 ! 'video/x-raw,format=GRAY16_LE,width=1280,height=960,framerate=16/1' ! \
+    nvdeprender ! 'video/x-raw,format=NV12,width=1280,height=960,framerate=16/1' ! queue !  \
+    nvvideoconvert ! 'video/x-raw(memory:NVMM),format=NV12' ! \
+    m.sink_0 nvstreammux name=m width=800 height=600 batch-size=1 live-source=1 batched-push-timeout=40000 ! \
+    fakesink 
+
+
+gst-launch-1.0 \
+    nvdepcamera access-mode=0 stream-type=1 resolution-type=0 ! 'video/x-raw,format=GRAY16_LE,width=1280,height=960,framerate=16/1' ! \
+    nvdeprender ! 'video/x-raw,format=NV12,width=1280,height=960,framerate=16/1' ! queue !  \
+    nvvideoconvert ! nvdsosd ! \
+    nveglglessink  
+
+----------------------------RGBA --> streammux -->sink
+gst-launch-1.0 \
+    nvdepcamera access-mode=0 stream-type=2 resolution-type=0 ! 'video/x-raw,format=NV12,width=1280,height=960,framerate=16/1' ! \
+    nvvideoconvert ! 'video/x-raw(memory:NVMM),format=NV12' ! m.sink_0 nvstreammux name=m live-source=1 batch-size=1 width=800 height=600 ! \
+	nveglglessink
+
+----------------------------RGBA --> streammux --> infer --> osd --> sink
+gst-launch-1.0 \
+    nvdepcamera access-mode=0 stream-type=2 resolution-type=0 ! 'video/x-raw,format=NV12,width=1280,height=960,framerate=16/1' ! \
+    nvvideoconvert ! 'video/x-raw(memory:NVMM),format=NV12' ! m.sink_0 nvstreammux name=m live-source=1 batch-size=1 width=800 height=600 ! \
+    queue ! nvvideoconvert ! nvinfer config-file-path=configs/config_infer_cvy_fod.cfg ! \
+	queue ! nvvideoconvert ! nvdsosd ! \
+	nveglglessink
 
 
 
+---------------------------- deep --> sink && RGBA --> streammux -->sink
+gst-launch-1.0 \
+    nvdepcamera access-mode=0 stream-type=0 resolution-type=0 ! 'video/x-raw,format=BGRA,width=1280,height=960,framerate=16/1' ! queue ! nvdepdemux name=demux \
+    demux.depth ! queue ! 'video/x-raw,format=GRAY16_LE,width=1280,height=960,framerate=16/1' ! nvdeprender ! 'video/x-raw,format=NV12,width=1280,height=960,framerate=16/1' ! queue ! videoconvert ! xvimagesink \
+    demux.color ! queue ! 'video/x-raw,format=NV12,width=1280,height=960,framerate=16/1' ! videoconvert ! tee ! \
+    nvvideoconvert ! 'video/x-raw(memory:NVMM),format=NV12,width=1280,height=960,framerate=16/1' ! \
+    m.sink_0 nvstreammux name=m width=640 height=480 batch-size=1 live-source=1 batched-push-timeout=4000 gpu-id=0 ! \
+    videoconvert ! nveglglessink
+
+---------------------------- deep --> sink && RGBA --> streammux --> osd -->sink
+gst-launch-1.0 \
+    nvdepcamera access-mode=0 stream-type=0 resolution-type=0 ! 'video/x-raw,format=BGRA,width=1280,height=960,framerate=16/1' ! queue ! nvdepdemux name=demux \
+    demux.depth ! queue ! 'video/x-raw,format=GRAY16_LE,width=1280,height=960,framerate=16/1' ! nvdeprender ! 'video/x-raw,format=NV12,width=1280,height=960,framerate=16/1' ! \
+    queue ! videoconvert ! fakesink \
+    demux.color ! queue ! 'video/x-raw,format=NV12,width=1280,height=960,framerate=16/1' ! videoconvert ! tee ! \
+    nvvideoconvert ! 'video/x-raw(memory:NVMM),format=NV12,width=1280,height=960,framerate=16/1' ! \
+    m.sink_0 nvstreammux name=m width=640 height=480 batch-size=1 live-source=1 batched-push-timeout=40000 gpu-id=0 ! \
+    queue ! nvvideoconvert ! nvinfer config-file-path=configs/config_infer_cvy_fod.cfg ! \
+    queue ! nvvideoconvert ! nvdsosd ! \
+    videoconvert ! nveglglessink
+
+----------------------------------------------------------------------------------------------------------------------------------
 -------------
 # 播放音频
 gst-launch-1.0 filesrc location=/media/gk/DATA/cari_data/common/audio/test01.mp3 ! audioconvert ! audioresample ! osssink

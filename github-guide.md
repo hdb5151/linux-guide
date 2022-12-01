@@ -49,7 +49,7 @@
 >* 项目提交
 >>* git commit -m "解释说明"
 >* 创建main 分支
->>* git btanch -M main
+>>* git branch -M main
 >* 设置项目上传到github 的仓库地址，例如https://github.91chi.fun/https://github.com/hdb5151/linx-guiding.git
 >>* git remote add origin '仓库地址'
 >* 上传
